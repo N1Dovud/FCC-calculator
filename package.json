@@ -1,0 +1,30 @@
+{
+  "name": "calculator",
+  "version": "1.0.0",
+  "description": "React app calculator that uses some other frontend frameworks",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/N1Dovud/FCC-calculator.git"
+  },
+  "keywords": [
+    "FreeCodeCamp"
+  ],
+  "author": "Dovud Jo'rayev",
+  "bugs": {
+    "url": "https://github.com/N1Dovud/FCC-calculator/issues"
+  },
+  "homepage": "https://github.com/N1Dovud/FCC-calculator#readme",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "jquery": "^3.7.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-redux": "^9.1.2",
+    "redux": "^5.0.1",
+    "webpack": "^5.95.0"
+  }
+}
