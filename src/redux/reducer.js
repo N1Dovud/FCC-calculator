@@ -8,8 +8,8 @@ const initialState = {
 
 
 // reducer
-export default function reducer(state = initialState, { action_type, value }) {
-    switch (action_type) {
+export default function reducer(state = initialState, { type, value }) {
+    switch (type) {
         case UPDATE_EXPRESSION:
             return { ...state, expression: state.expression + value };
         case SET_EXPRESSION:

@@ -1,7 +1,7 @@
-import { useDispatch, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { ID, NUMBERS, OPERATORS, NUMBERS_ID, OPERATORS_ID, ADDITIVE, MULTIPLICATIVE, BUTTONTYPES } from './ids.js';
 import { set_current, update_current, set_expression, update_expression } from '../redux/actionCreators';
-import { evaluate } from 'mathjs';
+import { evaluate, round } from 'mathjs';
 import React from 'react';
 
 function Button({ id, buttonType }) {
@@ -14,12 +14,12 @@ function Button({ id, buttonType }) {
         className = "number";
     }
     if (id === "display") {
-        const expression = useSelector(state => state.expression);
-        const current = useSelector(state => state.current);
+        const expression = useSelector(state => state.expression, shallowEqual);
+        const current = useSelector(state => state.current, shallowEqual);
         return (
-            <div id={id}>
-                <div className={floater}>{expression + current}</div>
-                <div className={floater}>{current ? current : "0"}</div>
+            <div className={id}>
+                <div>{expression + current}</div>
+                <div id={id}>{current ? current : "0"}</div>
             </div>
         )
     }
@@ -36,6 +36,9 @@ function Button({ id, buttonType }) {
                 } 
                 else if (current === "0" && id !== "zero") {
                     dispatch(set_current(buttonType));
+                }
+                else if (current[0] === "0" && !current.includes(".")) {
+                    
                 }
                 // if current is some other number
                 else if (NUMBERS.includes(current[0])) {
@@ -55,46 +58,77 @@ function Button({ id, buttonType }) {
                     dispatch(update_expression(current));
                     dispatch(set_current(buttonType));
                 }
+                // if current is the result of previous calculation
+                else if (expression[expression.length - 1] === "=") {
+                    dispatch(set_expression(""));
+                    dispatch(set_current(buttonType));
+                }
             }
             // operator is pressed
             else if (OPERATORS_ID.includes(id)) {
                 // in case the current is empty and minus or plus is clicked
                 if (current === "" && ADDITIVE.includes(buttonType)) {
+                    console.log("1")
                     dispatch(set_current(buttonType));
                 }
-                // in other cases
-                else {
                 // if the last item in the expression is not an operator
-                    if (expression && !OPERATORS.includes(expression[expression.length - 1])) {
+                else if (!OPERATORS.includes(expression[expression.length - 1])){
+                    if (expression) {
+                        console.log("2")
                         // if the current is / or X and the clicked operator is + or -, we store. Also, when the numbers are opposite additives, we also store them 
                         if (MULTIPLICATIVE.includes(current) && ADDITIVE.includes(buttonType) || (current === "+" && buttonType === "-") || (current === "-" && buttonType === "+")) {
                             dispatch(update_expression(current));
                             dispatch(set_current(buttonType));
-                        }
-                        // if the current holds numbers, it is enough to check the first char because if it is a number, 100% the rest is also a number, also current is not empty here
-                        else if (NUMBERS.includes(current[0])) {
-                            // send the number to the expression and store the current operator in the current
-                            dispatch(update_expression(current));
-                            dispatch(set_current(buttonType));
+                            console.log(3);
                         }
                         // in other cases, just set the current to that operator
                         else {
+                            console.log(4)
                             dispatch(set_current(buttonType));
                         }
                     }
-
-                    // if there is already an operator at the end of the expression and current is also operator and again an operator is clicked
-                    else {
-                        // if the clicked button is not the same as the current button because if it is, we just do nothing
-                        if (buttonType !== current) {
-                            // we get rid of that operator in the expression and set the current to the clicked operator
-                            dispatch(set_expression(expression.slice(0, -1)));
+                    // if the current holds numbers, it is enough to check the first char because if it is a number, 100% the rest is also a number, also current is not empty here
+                    if (NUMBERS.includes(current[0])) {
+                        if (current[current.length - 1] === ".") {
+                            console.log(5)
+                            dispatch(update_expression(current.slice(0, -1)));
                             dispatch(set_current(buttonType));
-                        } 
+                        }
+                        else {
+                            console.log("logic is supposed to work here")
+                            // send the number to the expression and store the current operator in the current
+                            dispatch(update_expression(current));
+                            dispatch(set_current(buttonType));
+
+                        }
+                    }
+                    // if current is the result of previous calculation
+                    else if (expression[expression.length - 1] === "=") {
+                        console.log("getting executed!!!")
+                        dispatch(set_expression(current));
+                        dispatch(set_current(buttonType));
                     }
                 }
+                
+                // if there is already an operator at the end of the expression
+                else {
+                    console.log(6)
+                    // check to see if current is a number
+                    if (NUMBERS.includes(current[0])) {
+                        dispatch(update_expression(current));
+                        dispatch(set_current(buttonType));
+                    }
+                    // if the clicked button is not the same as the current button because if it is, we just do nothing
+                    else if (buttonType !== current) {
+                        console.log(7)
+                        // we get rid of that operator in the expression and set the current to the clicked operator
+                        dispatch(set_expression(expression.slice(0, -1)));
+                        dispatch(set_current(buttonType));
+                    } 
+                }
             }
-            else if (buttonType === ".") {
+            //decimal number is pressed
+            else if (id === "decimal") {
 
                 // in the initial condition
                 if (current === "") {
@@ -105,8 +139,13 @@ function Button({ id, buttonType }) {
                     dispatch(update_expression(current));
                     dispatch(set_current("0."));
                 }
+                //if clicked after a calculation
+                else if (expression[expression.length - 1] === "=") {
+                    dispatch(set_expression(""));
+                    dispatch(set_current("0."));
+                }
                 // if the current is some number and  it does not have a comma
-                else if (!current.includes(".")) {
+                else if (current.indexOf(".") === -1) {
                     dispatch(update_current("."));
                 }
             }
@@ -118,20 +157,28 @@ function Button({ id, buttonType }) {
                     if (OPERATORS.includes(expression[expression.length - 1])) {
                         dispatch(set_expression(expression.slice(0, -1)));
                     }
+                    console.log("bzzzzzz")
                     // do the calculation
                     let trueExpression = expression;
                     trueExpression = trueExpression.replace("X", "*");
-                    const result = round(evaluate(trueExpression), 4);
-                    dispatch(update_expression("="));
-                    dispatch(set_current(result));
+                    if (trueExpression) {
+                        const result = round(evaluate(trueExpression), 4);
+                        dispatch(update_expression("="));
+                        dispatch(set_current(result));
+                    }
                 }
-                else {
+                // if expression does not contain equal sign
+                else if (expression[expression.length - 1] !== "="){
                     // do the calculation
+                    console.log("papapapa");
                     let trueExpression = expression + current;
                     trueExpression = trueExpression.replace("X", "*");
-                    const result = round(evaluate(trueExpression), 4);
-                    dispatch(update_expression("="));
-                    dispatch(set_current(result));
+                    console.log(trueExpression);
+                    if (trueExpression) {
+                        const result = round(evaluate(trueExpression), 4);
+                        dispatch(update_expression(current + "="));
+                        dispatch(set_current(result));
+                    }
                 }
             }
             else if (id === "clear") {
@@ -149,9 +196,9 @@ function Button({ id, buttonType }) {
 export default function Calculator() {
     return (
         <>
-            {ID.map((id, index) => {
+            {ID.map((id, index) => (
                 <Button key={id} id={id} buttonType={BUTTONTYPES[index]} />
-            })}
+            ))}
         </>
     );
 };
