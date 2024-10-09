@@ -68,34 +68,28 @@ function Button({ id, buttonType }) {
             else if (OPERATORS_ID.includes(id)) {
                 // in case the current is empty and minus or plus is clicked
                 if (current === "" && ADDITIVE.includes(buttonType)) {
-                    console.log("1")
                     dispatch(set_current(buttonType));
                 }
                 // if the last item in the expression is not an operator
                 else if (!OPERATORS.includes(expression[expression.length - 1])){
                     if (expression) {
-                        console.log("2")
                         // if the current is / or X and the clicked operator is + or -, we store. Also, when the numbers are opposite additives, we also store them 
                         if (MULTIPLICATIVE.includes(current) && ADDITIVE.includes(buttonType) || (current === "+" && buttonType === "-") || (current === "-" && buttonType === "+")) {
                             dispatch(update_expression(current));
                             dispatch(set_current(buttonType));
-                            console.log(3);
                         }
                         // in other cases, just set the current to that operator
                         else {
-                            console.log(4)
                             dispatch(set_current(buttonType));
                         }
                     }
                     // if the current holds numbers, it is enough to check the first char because if it is a number, 100% the rest is also a number, also current is not empty here
                     if (NUMBERS.includes(current[0])) {
                         if (current[current.length - 1] === ".") {
-                            console.log(5)
                             dispatch(update_expression(current.slice(0, -1)));
                             dispatch(set_current(buttonType));
                         }
                         else {
-                            console.log("logic is supposed to work here")
                             // send the number to the expression and store the current operator in the current
                             dispatch(update_expression(current));
                             dispatch(set_current(buttonType));
@@ -104,7 +98,6 @@ function Button({ id, buttonType }) {
                     }
                     // if current is the result of previous calculation
                     else if (expression[expression.length - 1] === "=") {
-                        console.log("getting executed!!!")
                         dispatch(set_expression(current));
                         dispatch(set_current(buttonType));
                     }
@@ -112,7 +105,6 @@ function Button({ id, buttonType }) {
                 
                 // if there is already an operator at the end of the expression
                 else {
-                    console.log(6)
                     // check to see if current is a number
                     if (NUMBERS.includes(current[0])) {
                         dispatch(update_expression(current));
@@ -120,7 +112,6 @@ function Button({ id, buttonType }) {
                     }
                     // if the clicked button is not the same as the current button because if it is, we just do nothing
                     else if (buttonType !== current) {
-                        console.log(7)
                         // we get rid of that operator in the expression and set the current to the clicked operator
                         dispatch(set_expression(expression.slice(0, -1)));
                         dispatch(set_current(buttonType));
@@ -153,34 +144,32 @@ function Button({ id, buttonType }) {
             else if (buttonType === "=") {
                 //if current is an operator
                 if (OPERATORS.includes(current)) {
+                    let trueExpression;
                     // in case the last item in the expression contains an operator
                     if (OPERATORS.includes(expression[expression.length - 1])) {
-                        dispatch(set_expression(expression.slice(0, -1)));
+                        trueExpression = expression.slice(0, -1);
+                    } else {
+                        trueExpression = expression;
                     }
-                    console.log("bzzzzzz")
-                    // do the calculation
-                    let trueExpression = expression;
-                    trueExpression = trueExpression.replace("X", "*");
-                    if (trueExpression) {
-                        const result = round(evaluate(trueExpression), 4);
-                        dispatch(update_expression("="));
-                        dispatch(set_current(result));
-                    }
+                        const newExpression = trueExpression.replace(/X/g, "*");
+                        if (newExpression) {
+                            const result = round(evaluate(newExpression), 4);
+                            dispatch(set_expression(trueExpression + "="));
+                            dispatch(set_current(result));
+                        }
                 }
                 // if expression does not contain equal sign
                 else if (expression[expression.length - 1] !== "="){
-                    // do the calculation
-                    console.log("papapapa");
-                    let trueExpression = expression + current;
-                    trueExpression = trueExpression.replace("X", "*");
-                    console.log(trueExpression);
-                    if (trueExpression) {
-                        const result = round(evaluate(trueExpression), 4);
-                        dispatch(update_expression(current + "="));
-                        dispatch(set_current(result));
+                        // do the calculation
+                        let trueExpression = expression + current;
+                        trueExpression = trueExpression.replace(/X/g, "*");
+                        if (trueExpression) {
+                            const result = round(evaluate(trueExpression), 4);
+                            dispatch(update_expression(current + "="));
+                            dispatch(set_current(result));
+                        }
                     }
                 }
-            }
             else if (id === "clear") {
                 dispatch(set_expression(""));
                 dispatch(set_current(""));
